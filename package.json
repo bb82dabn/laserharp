@@ -1,0 +1,9 @@
+{
+  "name": "laserharp",
+  "version": "1.0.0",
+  "description": "Browser-based Laser Harp instrument",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

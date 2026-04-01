@@ -1,0 +1,7 @@
+services:
+  laserharp:
+    build: .
+    container_name: laserharp
+    ports:
+      - "4051:4049"
+    restart: unless-stopped

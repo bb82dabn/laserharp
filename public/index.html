@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laser Harp</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'Digital';
+    src: local('Courier New');
+  }
+
+  body {
+    background: #0a0a0a;
+    overflow: hidden;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #ccc;
+    user-select: none;
+    cursor: none;
+  }
+
+  canvas {
+    display: block;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  /* --- Top Control Bar --- */
+  #controls {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    border-bottom: 1px solid #444;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 24px;
+    z-index: 10;
+  }
+
+  #controls .logo {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff3366, #ff6633, #ffcc00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    white-space: nowrap;
+  }
+
+  #controls .divider {
+    width: 1px;
+    height: 32px;
+    background: #444;
+  }
+
+  /* Scale selector */
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .control-group label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #888;
+  }
+
+  .scale-btn {
+    padding: 4px 12px;
+    font-size: 11px;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 3px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .scale-btn:hover {
+    background: #333;
+    color: #fff;
+  }
+
+  .scale-btn.active {
+    background: linear-gradient(180deg, #444, #333);
+    border-color: #ff6633;
+    color: #ff6633;
+    box-shadow: 0 0 8px rgba(255,102,51,0.3);
+  }
+
+  /* Toggle switches */
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .toggle-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+  }
+
+  .toggle {
+    width: 40px;
+    height: 22px;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toggle .knob {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(180deg, #666, #444);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  .toggle.on {
+    background: #331a00;
+    border-color: #ff6633;
+  }
+
+  .toggle.on .knob {
+    left: 20px;
+    background: linear-gradient(180deg, #ff8844, #ff6633);
+    box-shadow: 0 0 8px rgba(255,102,51,0.5);
+  }
+
+  /* Waveform selector */
+  .wave-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 3px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .wave-btn:hover { background: #333; color: #fff; }
+
+  .wave-btn.active {
+    background: linear-gradient(180deg, #444, #333);
+    border-color: #33ccff;
+    color: #33ccff;
+    box-shadow: 0 0 8px rgba(51,204,255,0.3);
+  }
+
+  /* Bottom key hints */
+  #keyhints {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .keyhint {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(180deg, #333, #222);
+    border: 1px solid #555;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.1s;
+  }
+
+  .keyhint.active {
+    background: linear-gradient(180deg, #555, #444);
+    border-color: #ff6633;
+    color: #ff6633;
+    box-shadow: 0 0 10px rgba(255,102,51,0.4);
+  }
+
+  /* Filter indicator */
+  #filter-display {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Start overlay */
+  #start-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    cursor: pointer;
+  }
+
+  #start-overlay h1 {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff3366, #ff6633, #ffcc00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+
+  #start-overlay p {
+    font-size: 14px;
+    color: #666;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div id="start-overlay">
+  <h1>Laser Harp</h1>
+  <p>Click anywhere to begin</p>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div id="controls">
+  <div class="logo">Laser Harp</div>
+  <div class="divider"></div>
+
+  <div class="control-group">
+    <label>Scale</label>
+    <button type="button" class="scale-btn active" data-scale="pentatonic">Penta</button>
+    <button type="button" class="scale-btn" data-scale="major">Major</button>
+    <button type="button" class="scale-btn" data-scale="minor">Minor</button>
+    <button type="button" class="scale-btn" data-scale="chromatic">Chroma</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="control-group">
+    <label>Wave</label>
+    <button type="button" class="wave-btn" data-wave="sine">Sin</button>
+    <button type="button" class="wave-btn" data-wave="triangle">Tri</button>
+    <button type="button" class="wave-btn active" data-wave="sawtooth">Saw</button>
+    <button type="button" class="wave-btn" data-wave="square">Sqr</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="toggle-group">
+    <span class="toggle-label">Reverb</span>
+    <div class="toggle on" id="toggle-reverb"><div class="knob"></div></div>
+  </div>
+
+  <div class="toggle-group">
+    <span class="toggle-label">Delay</span>
+    <div class="toggle" id="toggle-delay"><div class="knob"></div></div>
+  </div>
+</div>
+
+<div id="keyhints"></div>
+<div id="filter-display">Filter: --</div>
+
+<script>
+// ============================================================
+// LASER HARP — Web Audio + Canvas Instrument
+// ============================================================
+
+const KEY_MAP = ['a','s','d','f','g','h','j','k','l',';','q','w','e','r','t'];
+
+// Scale definitions (semitone intervals from root)
+const SCALES = {
+  pentatonic: [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26, 28],
+  major:      [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21],
+  minor:      [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20],
+  chromatic:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+};
+
+const BASE_NOTE = 261.63; // C4
+const NUM_STRINGS = 13;
+
+// Laser colors per string (spread across spectrum)
+const LASER_COLORS = [
+  '#ff0044', '#ff2200', '#ff6600', '#ff9900', '#ffcc00',
+  '#aaff00', '#00ff66', '#00ffcc', '#00ccff', '#0066ff',
+  '#6600ff', '#aa00ff', '#ff00cc',
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let audioCtx = null;
+let masterGain = null;
+let filterNode = null;
+let reverbNode = null;
+let reverbGain = null;
+let delayNode = null;
+let delayGain = null;
+let delayFeedback = null;
+let dryGain = null;
+
+let currentScale = 'pentatonic';
+let currentWave = 'sawtooth';
+let reverbOn = true;
+let delayOn = false;
+let started = false;
+
+let mouseX = 0;
+let mouseY = 0;
+let canvasW = 0;
+let canvasH = 0;
+
+// Per-string state
+const strings = [];
+// Active voices (key -> {osc, gain, stringIndex})
+const activeVoices = {};
+
+// ============================================================
+// AUDIO SETUP
+// ============================================================
+async function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Master gain
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.35;
+
+  // Low-pass filter (mouse Y controls cutoff)
+  filterNode = audioCtx.createBiquadFilter();
+  filterNode.type = 'lowpass';
+  filterNode.frequency.value = 8000;
+  filterNode.Q.value = 2;
+
+  // Dry path
+  dryGain = audioCtx.createGain();
+  dryGain.gain.value = 1.0;
+
+  // Reverb (convolution)
+  reverbNode = audioCtx.createConvolver();
+  reverbGain = audioCtx.createGain();
+  reverbGain.gain.value = reverbOn ? 0.5 : 0;
+  const reverbBuffer = createReverbIR(audioCtx, 2.5, 3.0);
+  reverbNode.buffer = reverbBuffer;
+
+  // Delay
+  delayNode = audioCtx.createDelay(1.0);
+  delayNode.delayTime.value = 0.35;
+  delayFeedback = audioCtx.createGain();
+  delayFeedback.gain.value = 0.4;
+  delayGain = audioCtx.createGain();
+  delayGain.gain.value = delayOn ? 0.45 : 0;
+
+  // Routing:
+  // filterNode -> dryGain -> masterGain -> destination
+  // filterNode -> reverbNode -> reverbGain -> masterGain
+  // filterNode -> delayNode -> delayGain -> masterGain
+  //               delayNode -> delayFeedback -> delayNode (feedback loop)
+
+  filterNode.connect(dryGain);
+  dryGain.connect(masterGain);
+
+  filterNode.connect(reverbNode);
+  reverbNode.connect(reverbGain);
+  reverbGain.connect(masterGain);
+
+  filterNode.connect(delayNode);
+  delayNode.connect(delayGain);
+  delayGain.connect(masterGain);
+  delayNode.connect(delayFeedback);
+  delayFeedback.connect(delayNode);
+
+  masterGain.connect(audioCtx.destination);
+}
+
+// Generate impulse response for convolution reverb
+function createReverbIR(ctx, duration, decay) {
+  const rate = ctx.sampleRate;
+  const length = rate * duration;
+  const buffer = ctx.createBuffer(2, length, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+  }
+  return buffer;
+}
+
+// ============================================================
+// VOICE MANAGEMENT
+// ============================================================
+function getFrequency(stringIndex) {
+  const intervals = SCALES[currentScale];
+  const semitones = intervals[stringIndex] || 0;
+  return BASE_NOTE * Math.pow(2, semitones / 12);
+}
+
+function noteOn(stringIndex) {
+  if (!audioCtx || stringIndex < 0 || stringIndex >= NUM_STRINGS) return;
+  if (activeVoices[stringIndex]) return; // already playing
+
+  const freq = getFrequency(stringIndex);
+
+  // Create oscillator
+  const osc = audioCtx.createOscillator();
+  osc.type = currentWave;
+  osc.frequency.value = freq;
+
+  // Per-voice gain for envelope
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.03);
+
+  // Add a subtle second oscillator detuned for richness
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = currentWave;
+  osc2.frequency.value = freq;
+  osc2.detune.value = 7;
+
+  const gain2 = audioCtx.createGain();
+  gain2.gain.value = 0.25;
+
+  osc.connect(gain);
+  osc2.connect(gain2);
+  gain2.connect(gain);
+  gain.connect(filterNode);
+
+  osc.start();
+  osc2.start();
+
+  activeVoices[stringIndex] = { osc, osc2, gain, gain2 };
+
+  // Trigger string vibration
+  strings[stringIndex].vibration = 1.0;
+  strings[stringIndex].pluckTime = performance.now();
+}
+
+function noteOff(stringIndex) {
+  const voice = activeVoices[stringIndex];
+  if (!voice) return;
+
+  const now = audioCtx.currentTime;
+  voice.gain.gain.cancelScheduledValues(now);
+  voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+  voice.gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+  setTimeout(() => {
+    try {
+      voice.osc.stop();
+      voice.osc2.stop();
+      voice.osc.disconnect();
+      voice.osc2.disconnect();
+      voice.gain.disconnect();
+      voice.gain2.disconnect();
+    } catch(e) {}
+  }, 350);
+
+  delete activeVoices[stringIndex];
+}
+
+// ============================================================
+// CANVAS SETUP
+// ============================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvasW = window.innerWidth;
+  canvasH = window.innerHeight;
+  canvas.width = canvasW;
+  canvas.height = canvasH;
+  initStrings();
+}
+
+function initStrings() {
+  strings.length = 0;
+  const margin = 80;
+  const usableWidth = canvasW - margin * 2;
+  const spacing = usableWidth / (NUM_STRINGS - 1);
+  const topY = 80;
+  const bottomY = canvasH - 70;
+
+  for (let i = 0; i < NUM_STRINGS; i++) {
+    strings.push({
+      x: margin + i * spacing,
+      topY,
+      bottomY,
+      color: LASER_COLORS[i],
+      vibration: 0,
+      pluckTime: 0,
+      hover: 0, // 0-1 proximity of mouse
+    });
+  }
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function render(time) {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  // Dark room background
+  drawBackground();
+
+  // Metal frame
+  drawFrame();
+
+  // Laser strings
+  for (let i = 0; i < strings.length; i++) {
+    drawString(i, time);
+  }
+
+  // Mouse hand/cursor
+  drawCursor();
+
+  requestAnimationFrame(render);
+}
+
+function drawBackground() {
+  // Subtle radial gradient for "dark room" feel
+  const grad = ctx.createRadialGradient(canvasW/2, canvasH/2, 100, canvasW/2, canvasH/2, canvasW * 0.7);
+  grad.addColorStop(0, '#111');
+  grad.addColorStop(1, '#050505');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  // Floor reflection line
+  ctx.beginPath();
+  ctx.moveTo(0, canvasH - 60);
+  ctx.lineTo(canvasW, canvasH - 60);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawFrame() {
+  const margin = 60;
+  const topY = 56;
+  const bottomY = canvasH - 50;
+
+  // Metal bar top
+  const topGrad = ctx.createLinearGradient(0, topY, 0, topY + 24);
+  topGrad.addColorStop(0, '#555');
+  topGrad.addColorStop(0.5, '#888');
+  topGrad.addColorStop(1, '#444');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(margin - 20, topY, canvasW - margin * 2 + 40, 6);
+
+  // Metal bar bottom
+  const botGrad = ctx.createLinearGradient(0, bottomY - 3, 0, bottomY + 3);
+  botGrad.addColorStop(0, '#555');
+  botGrad.addColorStop(0.5, '#888');
+  botGrad.addColorStop(1, '#444');
+  ctx.fillStyle = botGrad;
+  ctx.fillRect(margin - 20, bottomY, canvasW - margin * 2 + 40, 6);
+
+  // Side pillars
+  for (const x of [margin - 20, canvasW - margin + 14]) {
+    const pillarGrad = ctx.createLinearGradient(x, 0, x + 6, 0);
+    pillarGrad.addColorStop(0, '#444');
+    pillarGrad.addColorStop(0.5, '#777');
+    pillarGrad.addColorStop(1, '#444');
+    ctx.fillStyle = pillarGrad;
+    ctx.fillRect(x, topY, 6, bottomY - topY + 6);
+  }
+
+  // Screws
+  for (const x of [margin - 14, canvasW - margin + 8]) {
+    for (const y of [topY + 12, bottomY - 6]) {
+      ctx.beginPath();
+      ctx.arc(x + 3, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#999';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 3, y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#666';
+      ctx.fill();
+    }
+  }
+}
+
+function drawString(i, time) {
+  const s = strings[i];
+
+  // Decay vibration
+  if (s.vibration > 0.01) {
+    const elapsed = (time - s.pluckTime) / 1000;
+    s.vibration = Math.max(0, 1.0 - elapsed * 1.5);
+  } else {
+    s.vibration = 0;
+  }
+
+  // Calculate mouse proximity (0-1)
+  const dist = Math.abs(mouseX - s.x);
+  const proximityRange = 60;
+  s.hover = Math.max(0, 1 - dist / proximityRange);
+
+  const isActive = !!activeVoices[i];
+  const intensity = Math.max(s.hover * 0.4, isActive ? 0.9 : 0.15);
+
+  // Parse color to RGB for glow
+  const rgb = hexToRGB(s.color);
+
+  // Outer glow (widest, most transparent)
+  if (intensity > 0.1) {
+    ctx.beginPath();
+    drawVibratingLine(ctx, s.x, s.topY + 10, s.bottomY, s.vibration, time, i);
+    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.08})`;
+    ctx.lineWidth = 28 * intensity;
+    ctx.shadowColor = s.color;
+    ctx.shadowBlur = 40 * intensity;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Mid glow
+  ctx.beginPath();
+  drawVibratingLine(ctx, s.x, s.topY + 10, s.bottomY, s.vibration, time, i);
+  ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${intensity * 0.25})`;
+  ctx.lineWidth = 10 * intensity;
+  ctx.stroke();
+
+  // Core beam
+  ctx.beginPath();
+  drawVibratingLine(ctx, s.x, s.topY + 10, s.bottomY, s.vibration, time, i);
+  ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.5 + intensity * 0.5})`;
+  ctx.lineWidth = 2 + intensity * 2;
+  ctx.stroke();
+
+  // White-hot center when active
+  if (isActive) {
+    ctx.beginPath();
+    drawVibratingLine(ctx, s.x, s.topY + 10, s.bottomY, s.vibration, time, i);
+    ctx.strokeStyle = `rgba(255,255,255,${0.3 + s.vibration * 0.5})`;
+    ctx.lineWidth = 1 + s.vibration;
+    ctx.stroke();
+  }
+
+  // Top and bottom emitter dots
+  for (const y of [s.topY + 8, s.bottomY + 2]) {
+    ctx.beginPath();
+    ctx.arc(s.x, y, 3 + intensity * 2, 0, Math.PI * 2);
+    const dotGrad = ctx.createRadialGradient(s.x, y, 0, s.x, y, 5 + intensity * 3);
+    dotGrad.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${0.9})`);
+    dotGrad.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+    ctx.fillStyle = dotGrad;
+    ctx.fill();
+  }
+
+  // Note name below
+  if (isActive || s.hover > 0.3) {
+    const freq = getFrequency(i);
+    const noteName = frequencyToNote(freq);
+    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${Math.max(s.hover, isActive ? 1 : 0)})`;
+    ctx.font = '11px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(noteName, s.x, s.bottomY + 22);
+  }
+}
+
+function drawVibratingLine(ctx, x, topY, bottomY, vibration, time, index) {
+  if (vibration < 0.01) {
+    ctx.moveTo(x, topY);
+    ctx.lineTo(x, bottomY);
+    return;
+  }
+
+  const segments = 40;
+  const segH = (bottomY - topY) / segments;
+  const freq1 = 8 + index * 0.5;
+  const freq2 = 12 + index * 0.3;
+  const timeS = time / 1000;
+
+  ctx.moveTo(x, topY);
+  for (let s = 1; s <= segments; s++) {
+    const t = s / segments;
+    const y = topY + s * segH;
+    // Vibration is strongest in the middle of the string
+    const envelope = Math.sin(t * Math.PI);
+    const displacement = vibration * envelope * 12 *
+      (Math.sin(t * freq1 + timeS * 20) * 0.6 +
+       Math.sin(t * freq2 + timeS * 25) * 0.4);
+    ctx.lineTo(x + displacement, y);
+  }
+}
+
+function drawCursor() {
+  // Glowing hand cursor
+  const radius = 12;
+
+  // Outer glow
+  const grad = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 35);
+  grad.addColorStop(0, 'rgba(255,255,255,0.12)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(mouseX, mouseY, 35, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Crosshair
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mouseX - radius, mouseY);
+  ctx.lineTo(mouseX + radius, mouseY);
+  ctx.moveTo(mouseX, mouseY - radius);
+  ctx.lineTo(mouseX, mouseY + radius);
+  ctx.stroke();
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(mouseX, mouseY, 2, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fill();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function hexToRGB(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
+}
+
+function frequencyToNote(freq) {
+  const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const semitone = Math.round(12 * Math.log2(freq / 440));
+  const noteIndex = ((semitone % 12) + 12) % 12;
+  const octave = Math.floor((semitone + 69) / 12);
+  // A4 = 440, MIDI note 69
+  return notes[(noteIndex + 9) % 12] + octave;
+}
+
+// ============================================================
+// INPUT HANDLING
+// ============================================================
+const keyHintsEl = document.getElementById('keyhints');
+
+function buildKeyHints() {
+  keyHintsEl.innerHTML = '';
+  for (let i = 0; i < NUM_STRINGS; i++) {
+    const div = document.createElement('div');
+    div.className = 'keyhint';
+    div.id = `keyhint-${i}`;
+    div.textContent = KEY_MAP[i] || '';
+    keyHintsEl.appendChild(div);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const idx = KEY_MAP.indexOf(e.key.toLowerCase());
+  if (idx >= 0 && idx < NUM_STRINGS) {
+    noteOn(idx);
+    const hint = document.getElementById(`keyhint-${idx}`);
+    if (hint) hint.classList.add('active');
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  const idx = KEY_MAP.indexOf(e.key.toLowerCase());
+  if (idx >= 0 && idx < NUM_STRINGS) {
+    noteOff(idx);
+    const hint = document.getElementById(`keyhint-${idx}`);
+    if (hint) hint.classList.remove('active');
+  }
+});
+
+// Mouse: X = hand position, Y = filter cutoff
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+
+  if (filterNode) {
+    // Map Y: top = high cutoff (bright), bottom = low cutoff (dark)
+    const normalized = 1 - (mouseY / canvasH);
+    const minFreq = 200;
+    const maxFreq = 12000;
+    const freq = minFreq * Math.pow(maxFreq / minFreq, normalized);
+    filterNode.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.05);
+
+    document.getElementById('filter-display').textContent =
+      `Filter: ${Math.round(freq)} Hz`;
+  }
+});
+
+// Mouse click to pluck nearest string
+canvas.addEventListener('mousedown', (e) => {
+  if (!started) return;
+  const nearest = findNearestString(e.clientX);
+  if (nearest >= 0) {
+    noteOn(nearest);
+    // Release after a short sustain
+    setTimeout(() => noteOff(nearest), 400);
+  }
+});
+
+function findNearestString(x) {
+  let bestIdx = -1;
+  let bestDist = 60; // max distance to trigger
+  for (let i = 0; i < strings.length; i++) {
+    const d = Math.abs(x - strings[i].x);
+    if (d < bestDist) {
+      bestDist = d;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+// ============================================================
+// UI CONTROLS
+// ============================================================
+
+// Scale buttons
+document.querySelectorAll('.scale-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.scale-btn').forEach(b => { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentScale = btn.dataset.scale;
+    // Stop all active voices (scale changed)
+    for (const idx in activeVoices) {
+      noteOff(parseInt(idx));
+    }
+  });
+});
+
+// Waveform buttons
+document.querySelectorAll('.wave-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.wave-btn').forEach(b => { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentWave = btn.dataset.wave;
+    // Update live oscillators
+    for (const idx in activeVoices) {
+      const v = activeVoices[idx];
+      v.osc.type = currentWave;
+      v.osc2.type = currentWave;
+    }
+  });
+});
+
+// Reverb toggle
+document.getElementById('toggle-reverb').addEventListener('click', function() {
+  reverbOn = !reverbOn;
+  this.classList.toggle('on', reverbOn);
+  if (reverbGain) {
+    reverbGain.gain.setTargetAtTime(reverbOn ? 0.5 : 0, audioCtx.currentTime, 0.1);
+  }
+});
+
+// Delay toggle
+document.getElementById('toggle-delay').addEventListener('click', function() {
+  delayOn = !delayOn;
+  this.classList.toggle('on', delayOn);
+  if (delayGain) {
+    delayGain.gain.setTargetAtTime(delayOn ? 0.45 : 0, audioCtx.currentTime, 0.1);
+  }
+});
+
+// ============================================================
+// STARTUP
+// ============================================================
+document.getElementById('start-overlay').addEventListener('click', async () => {
+  if (started) return;
+  started = true;
+  document.getElementById('start-overlay').style.display = 'none';
+  await initAudio();
+});
+
+window.addEventListener('resize', resize);
+resize();
+buildKeyHints();
+requestAnimationFrame(render);
+</script>
+</body>
+</html>
