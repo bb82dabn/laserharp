@@ -21,3 +21,6 @@ npm-debug.log*
 # Editor
 .vscode/settings.json
 .idea/
+
+# GitPal
+.gp/
