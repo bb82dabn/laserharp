@@ -5,7 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Laser Harp</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #33ccff;
+    --primary-dim: #167d9f;
+    --secondary: #ff6633;
+    --accent: #ffcc00;
+    --bg-dark: #050608;
+    --bg-panel: rgba(10, 12, 18, 0.9);
+    --border: rgba(51, 204, 255, 0.18);
+    --text: #d6edf6;
+    --text-dim: #78909a;
+  }
 
   @font-face {
     font-family: 'Digital';
@@ -13,51 +27,52 @@
   }
 
   body {
-    background: #0a0a0a;
+    background: var(--bg-dark);
     overflow: hidden;
-    font-family: 'Segoe UI', Arial, sans-serif;
-    color: #ccc;
+    font-family: 'Rajdhani', 'Segoe UI', Arial, sans-serif;
+    color: var(--text);
     user-select: none;
     cursor: none;
+    height: 100vh;
+    width: 100vw;
   }
 
   canvas {
     display: block;
-    position: absolute;
-    top: 0; left: 0;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
   }
 
-  /* --- Top Control Bar --- */
+  /* --- Bottom Control HUD --- */
   #controls {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 56px;
-    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-    border-bottom: 1px solid #444;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    gap: 24px;
-    z-index: 10;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    padding: 16px 24px;
+    background: linear-gradient(0deg, rgba(5, 6, 8, 0.96) 0%, transparent 100%);
+    pointer-events: none;
   }
 
   #controls .logo {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 3px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 4px;
     text-transform: uppercase;
-    background: linear-gradient(90deg, #ff3366, #ff6633, #ffcc00);
+    background: linear-gradient(135deg, var(--secondary), var(--accent), var(--primary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: none;
     white-space: nowrap;
-  }
-
-  #controls .divider {
-    width: 1px;
-    height: 32px;
-    background: #444;
+    pointer-events: auto;
   }
 
   /* Scale selector */
@@ -65,111 +80,125 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    pointer-events: auto;
   }
 
   .control-group label {
+    font-family: 'Orbitron', sans-serif;
     font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #888;
+    letter-spacing: 2px;
+    color: var(--text-dim);
   }
 
-  .scale-btn {
-    padding: 4px 12px;
-    font-size: 11px;
-    background: #222;
-    border: 1px solid #555;
-    border-radius: 3px;
-    color: #aaa;
+  .button-row {
+    display: flex;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .scale-btn,
+  .wave-btn {
+    padding: 6px 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-dim);
     cursor: pointer;
-    transition: all 0.15s;
+    letter-spacing: 1px;
+    transition: all 0.2s;
   }
 
-  .scale-btn:hover {
-    background: #333;
-    color: #fff;
+  .scale-btn:hover,
+  .wave-btn:hover {
+    color: var(--text);
   }
 
   .scale-btn.active {
-    background: linear-gradient(180deg, #444, #333);
-    border-color: #ff6633;
-    color: #ff6633;
-    box-shadow: 0 0 8px rgba(255,102,51,0.3);
+    background: rgba(255, 102, 51, 0.16);
+    color: var(--secondary);
+    box-shadow: 0 0 10px rgba(255,102,51,0.16);
   }
-
-  /* Toggle switches */
-  .toggle-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .toggle-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #888;
-  }
-
-  .toggle {
-    width: 40px;
-    height: 22px;
-    background: #222;
-    border: 1px solid #555;
-    border-radius: 11px;
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .toggle .knob {
-    width: 16px;
-    height: 16px;
-    background: linear-gradient(180deg, #666, #444);
-    border-radius: 50%;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    transition: all 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-  }
-
-  .toggle.on {
-    background: #331a00;
-    border-color: #ff6633;
-  }
-
-  .toggle.on .knob {
-    left: 20px;
-    background: linear-gradient(180deg, #ff8844, #ff6633);
-    box-shadow: 0 0 8px rgba(255,102,51,0.5);
-  }
-
-  /* Waveform selector */
-  .wave-btn {
-    padding: 4px 10px;
-    font-size: 11px;
-    background: #222;
-    border: 1px solid #555;
-    border-radius: 3px;
-    color: #aaa;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .wave-btn:hover { background: #333; color: #fff; }
 
   .wave-btn.active {
-    background: linear-gradient(180deg, #444, #333);
-    border-color: #33ccff;
-    color: #33ccff;
-    box-shadow: 0 0 8px rgba(51,204,255,0.3);
+    background: rgba(51, 204, 255, 0.16);
+    color: var(--primary);
+    box-shadow: 0 0 10px rgba(51,204,255,0.16);
+  }
+
+  .key-select {
+    appearance: none;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--primary);
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 6px 26px 6px 12px;
+  }
+
+  .key-select:focus-visible,
+  .scale-btn:focus-visible,
+  .wave-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .slider-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(51, 204, 255, 0.16);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 10px rgba(51, 204, 255, 0.55);
+    cursor: pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 10px rgba(51, 204, 255, 0.55);
+    cursor: pointer;
+  }
+
+  .slider-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: var(--primary-dim);
   }
 
   /* Bottom key hints */
   #keyhints {
-    position: absolute;
-    bottom: 16px;
+    position: fixed;
+    bottom: 96px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -181,43 +210,46 @@
   .keyhint {
     width: 36px;
     height: 36px;
-    background: linear-gradient(180deg, #333, #222);
-    border: 1px solid #555;
+    background: rgba(0, 0, 0, 0.36);
+    border: 1px solid var(--border);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     font-weight: 600;
-    color: #666;
+    color: var(--text-dim);
     transition: all 0.1s;
   }
 
   .keyhint.active {
-    background: linear-gradient(180deg, #555, #444);
-    border-color: #ff6633;
-    color: #ff6633;
+    background: rgba(255, 102, 51, 0.16);
+    border-color: var(--secondary);
+    color: var(--secondary);
     box-shadow: 0 0 10px rgba(255,102,51,0.4);
   }
 
   /* Filter indicator */
   #filter-display {
-    position: absolute;
-    bottom: 60px;
-    right: 20px;
+    position: fixed;
+    top: 18px;
+    right: 24px;
     font-size: 10px;
-    color: #555;
-    letter-spacing: 1px;
+    color: var(--primary);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
     text-transform: uppercase;
     z-index: 10;
     pointer-events: none;
+    text-shadow: 0 0 10px rgba(51, 204, 255, 0.28);
   }
 
   /* Start overlay */
   #start-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(5,6,8,0.9);
+    backdrop-filter: blur(18px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -228,10 +260,11 @@
 
   #start-overlay h1 {
     font-size: 48px;
-    font-weight: 700;
-    letter-spacing: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    letter-spacing: 8px;
     text-transform: uppercase;
-    background: linear-gradient(90deg, #ff3366, #ff6633, #ffcc00);
+    background: linear-gradient(135deg, var(--secondary), var(--accent), var(--primary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 16px;
@@ -239,8 +272,45 @@
 
   #start-overlay p {
     font-size: 14px;
-    color: #666;
+    color: var(--text-dim);
     letter-spacing: 2px;
+  }
+
+  #start-overlay .start-hint {
+    margin-top: 28px;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--primary);
+    letter-spacing: 4px;
+  }
+
+  @media (max-width: 900px) {
+    #controls {
+      gap: 10px 14px;
+      padding: 12px;
+    }
+
+    #controls .logo {
+      width: 100%;
+      text-align: center;
+    }
+
+    #keyhints {
+      bottom: 138px;
+      max-width: calc(100vw - 24px);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .keyhint {
+      width: 30px;
+      height: 30px;
+    }
+
+    .scale-btn,
+    .wave-btn,
+    .key-select {
+      min-height: 36px;
+    }
   }
 </style>
 </head>
@@ -248,43 +318,67 @@
 
 <div id="start-overlay">
   <h1>Laser Harp</h1>
-  <p>Click anywhere to begin</p>
+  <p>Hold left click or touch beams to play</p>
+  <p class="start-hint">Right click while holding left for modulation</p>
 </div>
 
 <canvas id="canvas"></canvas>
 
 <div id="controls">
   <div class="logo">Laser Harp</div>
-  <div class="divider"></div>
-
-  <div class="control-group">
-    <label>Scale</label>
-    <button type="button" class="scale-btn active" data-scale="pentatonic">Penta</button>
-    <button type="button" class="scale-btn" data-scale="major">Major</button>
-    <button type="button" class="scale-btn" data-scale="minor">Minor</button>
-    <button type="button" class="scale-btn" data-scale="chromatic">Chroma</button>
-  </div>
-
-  <div class="divider"></div>
 
   <div class="control-group">
     <label>Wave</label>
-    <button type="button" class="wave-btn" data-wave="sine">Sin</button>
-    <button type="button" class="wave-btn" data-wave="triangle">Tri</button>
-    <button type="button" class="wave-btn active" data-wave="sawtooth">Saw</button>
-    <button type="button" class="wave-btn" data-wave="square">Sqr</button>
+    <div class="button-row">
+      <button type="button" class="wave-btn" data-wave="sine">Sin</button>
+      <button type="button" class="wave-btn" data-wave="triangle">Tri</button>
+      <button type="button" class="wave-btn active" data-wave="sawtooth">Saw</button>
+      <button type="button" class="wave-btn" data-wave="square">Sqr</button>
+    </div>
   </div>
 
-  <div class="divider"></div>
-
-  <div class="toggle-group">
-    <span class="toggle-label">Reverb</span>
-    <div class="toggle on" id="toggle-reverb"><div class="knob"></div></div>
+  <div class="control-group">
+    <label>Scale</label>
+    <div class="button-row">
+      <button type="button" class="scale-btn active" data-scale="pentatonic">Penta</button>
+      <button type="button" class="scale-btn" data-scale="major">Major</button>
+      <button type="button" class="scale-btn" data-scale="minor">Minor</button>
+      <button type="button" class="scale-btn" data-scale="chromatic">Chroma</button>
+    </div>
   </div>
 
-  <div class="toggle-group">
-    <span class="toggle-label">Delay</span>
-    <div class="toggle" id="toggle-delay"><div class="knob"></div></div>
+  <div class="control-group">
+    <label>Key</label>
+    <select class="key-select" id="key-select" aria-label="Root key">
+      <option value="C">C</option>
+      <option value="C#">C#</option>
+      <option value="D">D</option>
+      <option value="D#">D#</option>
+      <option value="E">E</option>
+      <option value="F">F</option>
+      <option value="F#">F#</option>
+      <option value="G">G</option>
+      <option value="G#">G#</option>
+      <option value="A">A</option>
+      <option value="A#">A#</option>
+      <option value="B">B</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <div class="slider-wrap">
+      <label for="reverb-mix">Reverb</label>
+      <input type="range" id="reverb-mix" min="0" max="100" value="50">
+      <span class="slider-value" id="reverb-value">50%</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="slider-wrap">
+      <label for="delay-mix">Delay</label>
+      <input type="range" id="delay-mix" min="0" max="100" value="0">
+      <span class="slider-value" id="delay-value">0%</span>
+    </div>
   </div>
 </div>
 
@@ -297,6 +391,8 @@
 // ============================================================
 
 const KEY_MAP = ['a','s','d','f','g','h','j','k','l',';','q','w','e','r','t'];
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const SETTINGS_STORAGE_KEY = 'laserharp.settings.v1';
 
 // Scale definitions (semitone intervals from root)
 const SCALES = {
@@ -331,9 +427,13 @@ let dryGain = null;
 
 let currentScale = 'pentatonic';
 let currentWave = 'sawtooth';
-let reverbOn = true;
-let delayOn = false;
+let rootNote = 'C';
+let reverbAmount = 0.5;
+let delayAmount = 0;
 let started = false;
+let isLeftMouseDown = false;
+let isRightModulating = false;
+let mouseActiveString = -1;
 
 let mouseX = 0;
 let mouseY = 0;
@@ -344,11 +444,17 @@ let canvasH = 0;
 const strings = [];
 // Active voices (key -> {osc, gain, stringIndex})
 const activeVoices = {};
+const heldSources = Array.from({ length: NUM_STRINGS }, () => new Set());
 
 // ============================================================
 // AUDIO SETUP
 // ============================================================
 async function initAudio() {
+  if (audioCtx) {
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    return;
+  }
+
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   // Master gain
@@ -368,7 +474,7 @@ async function initAudio() {
   // Reverb (convolution)
   reverbNode = audioCtx.createConvolver();
   reverbGain = audioCtx.createGain();
-  reverbGain.gain.value = reverbOn ? 0.5 : 0;
+  reverbGain.gain.value = reverbAmount;
   const reverbBuffer = createReverbIR(audioCtx, 2.5, 3.0);
   reverbNode.buffer = reverbBuffer;
 
@@ -378,7 +484,7 @@ async function initAudio() {
   delayFeedback = audioCtx.createGain();
   delayFeedback.gain.value = 0.4;
   delayGain = audioCtx.createGain();
-  delayGain.gain.value = delayOn ? 0.45 : 0;
+  delayGain.gain.value = delayAmount;
 
   // Routing:
   // filterNode -> dryGain -> masterGain -> destination
@@ -421,7 +527,8 @@ function createReverbIR(ctx, duration, decay) {
 // ============================================================
 function getFrequency(stringIndex) {
   const intervals = SCALES[currentScale];
-  const semitones = intervals[stringIndex] || 0;
+  const rootOffset = NOTE_NAMES.indexOf(rootNote);
+  const semitones = rootOffset + (intervals[stringIndex] || 0);
   return BASE_NOTE * Math.pow(2, semitones / 12);
 }
 
@@ -488,6 +595,31 @@ function noteOff(stringIndex) {
   delete activeVoices[stringIndex];
 }
 
+function holdString(source, stringIndex) {
+  if (!audioCtx || stringIndex < 0 || stringIndex >= NUM_STRINGS) return;
+  const holds = heldSources[stringIndex];
+  const wasHeld = holds.size > 0;
+  holds.add(source);
+  if (!wasHeld) noteOn(stringIndex);
+}
+
+function releaseString(source, stringIndex) {
+  if (stringIndex < 0 || stringIndex >= NUM_STRINGS) return;
+  const holds = heldSources[stringIndex];
+  holds.delete(source);
+  if (holds.size === 0) noteOff(stringIndex);
+}
+
+function releaseAllStrings() {
+  for (let i = 0; i < NUM_STRINGS; i++) {
+    heldSources[i].clear();
+    noteOff(i);
+    const hint = document.getElementById(`keyhint-${i}`);
+    if (hint) hint.classList.remove('active');
+  }
+  mouseActiveString = -1;
+}
+
 // ============================================================
 // CANVAS SETUP
 // ============================================================
@@ -507,8 +639,9 @@ function initStrings() {
   const margin = 80;
   const usableWidth = canvasW - margin * 2;
   const spacing = usableWidth / (NUM_STRINGS - 1);
-  const topY = 80;
-  const bottomY = canvasH - 70;
+  const topY = 72;
+  const bottomReserve = window.innerWidth <= 900 ? 214 : 160;
+  const bottomY = Math.max(topY + 180, canvasH - bottomReserve);
 
   for (let i = 0; i < NUM_STRINGS; i++) {
     strings.push({
@@ -528,6 +661,7 @@ function initStrings() {
 // ============================================================
 function render(time) {
   ctx.clearRect(0, 0, canvasW, canvasH);
+  updateAudioModulation(time);
 
   // Dark room background
   drawBackground();
@@ -544,6 +678,36 @@ function render(time) {
   drawCursor();
 
   requestAnimationFrame(render);
+}
+
+function isModulationActive() {
+  return isLeftMouseDown && isRightModulating;
+}
+
+function updateAudioModulation(time) {
+  if (!audioCtx || !masterGain) return;
+
+  const modulating = isModulationActive();
+  const t = time / 1000;
+  const tremolo = modulating ? 0.82 + Math.sin(t * 18) * 0.14 : 1;
+  masterGain.gain.setTargetAtTime(0.35 * tremolo, audioCtx.currentTime, 0.03);
+
+  if (reverbGain) {
+    reverbGain.gain.setTargetAtTime(Math.min(1, reverbAmount + (modulating ? 0.22 : 0)), audioCtx.currentTime, 0.05);
+  }
+  if (delayGain) {
+    delayGain.gain.setTargetAtTime(Math.min(0.85, delayAmount + (modulating ? 0.3 : 0)), audioCtx.currentTime, 0.05);
+  }
+  if (filterNode) {
+    filterNode.Q.setTargetAtTime(modulating ? 8 : 2, audioCtx.currentTime, 0.05);
+  }
+
+  const detune = modulating ? Math.sin(t * 28) * 22 : 0;
+  for (const idx in activeVoices) {
+    const voice = activeVoices[idx];
+    voice.osc.detune.value = detune;
+    voice.osc2.detune.value = 7 - detune * 0.35;
+  }
 }
 
 function drawBackground() {
@@ -566,7 +730,8 @@ function drawBackground() {
 function drawFrame() {
   const margin = 60;
   const topY = 56;
-  const bottomY = canvasH - 50;
+  const bottomReserve = window.innerWidth <= 900 ? 214 : 160;
+  const bottomY = Math.max(topY + 180, canvasH - bottomReserve);
 
   // Metal bar top
   const topGrad = ctx.createLinearGradient(0, topY, 0, topY + 24);
@@ -755,12 +920,8 @@ function hexToRGB(hex) {
 }
 
 function frequencyToNote(freq) {
-  const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const semitone = Math.round(12 * Math.log2(freq / 440));
-  const noteIndex = ((semitone % 12) + 12) % 12;
-  const octave = Math.floor((semitone + 69) / 12);
-  // A4 = 440, MIDI note 69
-  return notes[(noteIndex + 9) % 12] + octave;
+  const midi = Math.round(12 * Math.log2(freq / 440)) + 69;
+  return NOTE_NAMES[((midi % 12) + 12) % 12] + (Math.floor(midi / 12) - 1);
 }
 
 // ============================================================
@@ -780,10 +941,15 @@ function buildKeyHints() {
 }
 
 document.addEventListener('keydown', (e) => {
+  const tag = document.activeElement?.tagName;
+  const editable = document.activeElement?.isContentEditable;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || editable) return;
   if (e.repeat) return;
   const idx = KEY_MAP.indexOf(e.key.toLowerCase());
   if (idx >= 0 && idx < NUM_STRINGS) {
-    noteOn(idx);
+    e.preventDefault();
+    startInstrument();
+    holdString('key', idx);
     const hint = document.getElementById(`keyhint-${idx}`);
     if (hint) hint.classList.add('active');
   }
@@ -792,16 +958,15 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
   const idx = KEY_MAP.indexOf(e.key.toLowerCase());
   if (idx >= 0 && idx < NUM_STRINGS) {
-    noteOff(idx);
+    releaseString('key', idx);
     const hint = document.getElementById(`keyhint-${idx}`);
     if (hint) hint.classList.remove('active');
   }
 });
 
-// Mouse: X = hand position, Y = filter cutoff
-document.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
+function updatePointer(x, y) {
+  mouseX = x;
+  mouseY = y;
 
   if (filterNode) {
     // Map Y: top = high cutoff (bright), bottom = low cutoff (dark)
@@ -814,17 +979,100 @@ document.addEventListener('mousemove', (e) => {
     document.getElementById('filter-display').textContent =
       `Filter: ${Math.round(freq)} Hz`;
   }
+}
+
+function releaseMouseString() {
+  if (mouseActiveString >= 0) {
+    releaseString('mouse', mouseActiveString);
+    mouseActiveString = -1;
+  }
+}
+
+function updateMouseString() {
+  if (!isLeftMouseDown) {
+    releaseMouseString();
+    return;
+  }
+
+  const nearest = findNearestString(mouseX);
+  if (nearest === mouseActiveString) return;
+
+  releaseMouseString();
+  if (nearest >= 0) {
+    mouseActiveString = nearest;
+    holdString('mouse', nearest);
+  }
+}
+
+// Mouse: X = beam position, Y = filter cutoff, left hold = play gate
+document.addEventListener('mousemove', (e) => {
+  updatePointer(e.clientX, e.clientY);
+  if (isLeftMouseDown && (e.buttons & 1) !== 1) {
+    isLeftMouseDown = false;
+    isRightModulating = false;
+    releaseMouseString();
+    return;
+  }
+  isRightModulating = isLeftMouseDown && (e.buttons & 2) === 2;
+  updateMouseString();
 });
 
-// Mouse click to pluck nearest string
-canvas.addEventListener('mousedown', (e) => {
-  if (!started) return;
-  const nearest = findNearestString(e.clientX);
-  if (nearest >= 0) {
-    noteOn(nearest);
-    // Release after a short sustain
-    setTimeout(() => noteOff(nearest), 400);
+document.addEventListener('mousedown', (e) => {
+  if (e.button === 0) {
+    isLeftMouseDown = true;
+    startInstrument();
+    updatePointer(e.clientX, e.clientY);
+    updateMouseString();
+  } else if (e.button === 2 && isLeftMouseDown) {
+    e.preventDefault();
+    isRightModulating = true;
   }
+});
+
+document.addEventListener('mouseup', (e) => {
+  updatePointer(e.clientX, e.clientY);
+  if (e.button === 0) {
+    isLeftMouseDown = false;
+    isRightModulating = false;
+    releaseMouseString();
+  } else if (e.button === 2) {
+    isRightModulating = false;
+  }
+});
+
+document.addEventListener('contextmenu', (e) => {
+  if (isLeftMouseDown || (e.buttons & 1) === 1) e.preventDefault();
+});
+
+document.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  if (!touch) return;
+  isLeftMouseDown = true;
+  isRightModulating = false;
+  startInstrument();
+  updatePointer(touch.clientX, touch.clientY);
+  updateMouseString();
+}, { passive: false });
+
+document.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  if (!touch) return;
+  updatePointer(touch.clientX, touch.clientY);
+  updateMouseString();
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+  isLeftMouseDown = false;
+  isRightModulating = false;
+  releaseMouseString();
+});
+
+window.addEventListener('blur', () => {
+  isLeftMouseDown = false;
+  isRightModulating = false;
+  releaseMouseString();
 });
 
 function findNearestString(x) {
@@ -844,63 +1092,162 @@ function findNearestString(x) {
 // UI CONTROLS
 // ============================================================
 
+const elKeySelect = document.getElementById('key-select');
+const elReverbMix = document.getElementById('reverb-mix');
+const elDelayMix = document.getElementById('delay-mix');
+const elReverbValue = document.getElementById('reverb-value');
+const elDelayValue = document.getElementById('delay-value');
+
+function clampUnitInterval(value, fallback) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(0, Math.min(1, num));
+}
+
+function updateScaleUI() {
+  document.querySelectorAll('.scale-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.scale === currentScale);
+  });
+}
+
+function updateWaveUI() {
+  document.querySelectorAll('.wave-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.wave === currentWave);
+  });
+}
+
+function updateKeyUI() {
+  elKeySelect.value = rootNote;
+}
+
+function updateEffectUI() {
+  elReverbMix.value = Math.round(reverbAmount * 100);
+  elDelayMix.value = Math.round(delayAmount * 100);
+  elReverbValue.textContent = `${elReverbMix.value}%`;
+  elDelayValue.textContent = `${elDelayMix.value}%`;
+}
+
+function persistSettings() {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+      version: 1,
+      currentScale,
+      currentWave,
+      rootNote,
+      reverbAmount,
+      delayAmount
+    }));
+  } catch (err) {
+    console.warn('Failed to persist settings:', err);
+  }
+}
+
+function loadPersistedSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+
+    if (typeof parsed.currentScale === 'string' && Object.prototype.hasOwnProperty.call(SCALES, parsed.currentScale)) {
+      currentScale = parsed.currentScale;
+    }
+    if (typeof parsed.currentWave === 'string' && ['sine', 'triangle', 'sawtooth', 'square'].includes(parsed.currentWave)) {
+      currentWave = parsed.currentWave;
+    }
+    if (typeof parsed.rootNote === 'string' && NOTE_NAMES.includes(parsed.rootNote)) {
+      rootNote = parsed.rootNote;
+    }
+    reverbAmount = clampUnitInterval(parsed.reverbAmount, reverbAmount);
+    delayAmount = clampUnitInterval(parsed.delayAmount, delayAmount);
+  } catch (err) {
+    console.warn('Failed to load settings:', err);
+    localStorage.removeItem(SETTINGS_STORAGE_KEY);
+  }
+}
+
+function applySettingsUI() {
+  updateScaleUI();
+  updateWaveUI();
+  updateKeyUI();
+  updateEffectUI();
+}
+
 // Scale buttons
 document.querySelectorAll('.scale-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.scale-btn').forEach(b => { b.classList.remove('active'); });
-    btn.classList.add('active');
     currentScale = btn.dataset.scale;
-    // Stop all active voices (scale changed)
-    for (const idx in activeVoices) {
-      noteOff(parseInt(idx));
-    }
+    updateScaleUI();
+    releaseAllStrings();
+    persistSettings();
   });
 });
 
 // Waveform buttons
 document.querySelectorAll('.wave-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.wave-btn').forEach(b => { b.classList.remove('active'); });
-    btn.classList.add('active');
     currentWave = btn.dataset.wave;
+    updateWaveUI();
     // Update live oscillators
     for (const idx in activeVoices) {
       const v = activeVoices[idx];
       v.osc.type = currentWave;
       v.osc2.type = currentWave;
     }
+    persistSettings();
   });
 });
 
-// Reverb toggle
-document.getElementById('toggle-reverb').addEventListener('click', function() {
-  reverbOn = !reverbOn;
-  this.classList.toggle('on', reverbOn);
-  if (reverbGain) {
-    reverbGain.gain.setTargetAtTime(reverbOn ? 0.5 : 0, audioCtx.currentTime, 0.1);
-  }
+elKeySelect.addEventListener('change', (e) => {
+  rootNote = e.target.value;
+  releaseAllStrings();
+  updateKeyUI();
+  persistSettings();
 });
 
-// Delay toggle
-document.getElementById('toggle-delay').addEventListener('click', function() {
-  delayOn = !delayOn;
-  this.classList.toggle('on', delayOn);
-  if (delayGain) {
-    delayGain.gain.setTargetAtTime(delayOn ? 0.45 : 0, audioCtx.currentTime, 0.1);
+elReverbMix.addEventListener('input', (e) => {
+  reverbAmount = e.target.value / 100;
+  elReverbValue.textContent = `${e.target.value}%`;
+  if (reverbGain && !isModulationActive()) {
+    reverbGain.gain.setTargetAtTime(reverbAmount, audioCtx.currentTime, 0.08);
   }
+  persistSettings();
+});
+
+elDelayMix.addEventListener('input', (e) => {
+  delayAmount = e.target.value / 100;
+  elDelayValue.textContent = `${e.target.value}%`;
+  if (delayGain && !isModulationActive()) {
+    delayGain.gain.setTargetAtTime(delayAmount, audioCtx.currentTime, 0.08);
+  }
+  persistSettings();
+});
+
+// Keep HUD interactions from triggering the beam gate.
+document.querySelectorAll('#controls *').forEach(el => {
+  el.addEventListener('mousedown', (e) => e.stopPropagation());
+  el.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+  el.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
+  el.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true });
 });
 
 // ============================================================
 // STARTUP
 // ============================================================
-document.getElementById('start-overlay').addEventListener('click', async () => {
-  if (started) return;
-  started = true;
-  document.getElementById('start-overlay').style.display = 'none';
+async function startInstrument() {
+  if (!started) {
+    started = true;
+    document.getElementById('start-overlay').style.display = 'none';
+  }
   await initAudio();
+}
+
+document.getElementById('start-overlay').addEventListener('click', () => {
+  startInstrument();
 });
 
 window.addEventListener('resize', resize);
+loadPersistedSettings();
+applySettingsUI();
 resize();
 buildKeyHints();
 requestAnimationFrame(render);

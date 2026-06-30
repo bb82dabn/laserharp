@@ -5,6 +5,20 @@ build/
 .cache/
 *.tsbuildinfo
 
+# JUCE / CMake plugin build outputs
+plugin/build/
+plugin/cmake-build-*/
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.exp
+*.pdb
+*.ilk
+
 # Environment
 .env
 .env.local

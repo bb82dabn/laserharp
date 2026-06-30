@@ -2,21 +2,31 @@
 Browser-based Laser Harp instrument for interactive musical performance and experimentation
 
 ## Description  
-laserharp is a lightweight web server delivering a browser-based laser harp instrument interface. It serves static assets including an interactive HTML5 canvas UI that simulates a laser harp, enabling users to play and experiment with musical scales and waveforms directly in the browser. This project targets musicians, hobbyists, and developers interested in digital musical instruments and interactive sound synthesis.
+laserharp is a lightweight web server delivering a browser-based laser harp instrument interface. It serves static assets including an interactive HTML5 canvas UI that simulates a laser harp, enabling users to play beams with mouse, touch, or keyboard and experiment with musical scales, root keys, waveforms, and effects directly in the browser.
 
 ## Features  
 - **Static file server** serving the laser harp web interface on port 4049  
 - **Interactive UI** rendered in `public/index.html` with:  
-  - Top control bar featuring:  
-    - Scale selector buttons  
+  - Bottom neon HUD featuring:  
     - Waveform selector buttons  
-    - Toggle switches for sound options  
+    - Scale selector buttons  
+    - Root key selector  
+    - Reverb and delay mix sliders  
   - Canvas-based laser harp visualization and interaction  
   - Bottom key hints for user guidance  
+- **Left-click or touch hold** for mouse/touch beam playing  
+- **Keyboard beam input** with `a s d f g h j k l ; q w e r t`  
+- **Right-click modulation** while holding left click for tremolo, detune, brighter filtering, and boosted ambience  
+- **Settings persistence** for scale, key, waveform, reverb, and delay  
 - **Custom fonts and styling** for a sleek dark-themed digital instrument look  
 - **Audio playback support** for multiple audio formats (wav, mp3, ogg) as indicated by MIME types  
-- **Dockerized deployment** for easy container-based hosting  
+- **Dockerized deployment** for easy container-based hosting
 - **Single HTTP server** implemented in `server.js` serving all static assets securely with directory traversal protection
+- **VST3 plugin** in [`plugin/`](plugin/) built with JUCE + CMake for Windows and Linux
+
+## VST3 Plugin
+
+A native VST3 plugin source tree lives in [`plugin/`](plugin/) and is built with JUCE + CMake. See [`plugin/README.md`](plugin/README.md) for full build instructions. The plugin provides 13 string voices, mouse-beam and MIDI note triggering, root-key scale snapping, waveform selection, filter, reverb, delay, and right-click modulation.
 
 ## Tech Stack  
 
@@ -59,7 +69,7 @@ Run the server directly with Node.js:
 ```bash
 npm start
 ```
-This starts the HTTP server on `http://localhost:4049`.
+This starts the HTTP server on `http://localhost:4049`. Hold left click or touch a beam to play with the pointer, or use the keyboard row shown at the bottom of the instrument.
 
 ### Production / Docker  
 Build and run the Docker container:  
