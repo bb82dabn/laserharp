@@ -139,10 +139,7 @@ void LaserHarpAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
   const auto outputGain = parameters.getRawParameterValue("gain")->load();
   const auto modActive = modulation.load();
 
-  if (filterCutoff != lowpass.coefficients->getMagnitudeAtFrequency(filterCutoff, 0.0f))
-  {
-    *lowpass.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, filterCutoff, 0.707f);
-  }
+  *lowpass.coefficients = *juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, filterCutoff, 0.707f);
 
   for (const auto metadata : midi)
   {
