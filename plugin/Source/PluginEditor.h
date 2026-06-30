@@ -13,6 +13,8 @@ public:
   void resized() override;
   void mouseDown(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;
+  void mouseMove(const juce::MouseEvent&) override;
+  void mouseExit(const juce::MouseEvent&) override;
   void mouseUp(const juce::MouseEvent&) override;
 
 private:
@@ -22,6 +24,8 @@ private:
   void configureCombo(juce::ComboBox&, const juce::StringArray&);
   void configureSlider(juce::Slider&, juce::Label&, const juce::String&);
   int findNearestString(juce::Point<int>) const;
+  void updateMouseHold(const juce::MouseEvent&);
+  void releaseMouseHold();
   void refreshGates();
 
   LaserHarpAudioProcessor& processor;

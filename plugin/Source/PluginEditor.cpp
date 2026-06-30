@@ -61,10 +61,49 @@ void LaserHarpAudioProcessorEditor::configureSlider(juce::Slider& slider, juce::
 
 int LaserHarpAudioProcessorEditor::findNearestString(juce::Point<int> position) const
 {
-  if (playArea.isEmpty()) return -1;
-  const auto x = static_cast<float>(position.x - playArea.getX()) / static_cast<float>(playArea.getWidth());
-  const auto index = juce::jlimit(0, LaserHarpAudioProcessor::numStrings - 1, static_cast<int>(std::round(x * (LaserHarpAudioProcessor::numStrings - 1))));
-  return index;
+  if (playArea.isEmpty() || !playArea.contains(position)) return -1;
+
+  const auto spacing = static_cast<float>(playArea.getWidth()) / static_cast<float>(LaserHarpAudioProcessor::numStrings - 1);
+  const auto maxDistance = std::min(60.0f, spacing * 0.48f);
+  int bestIndex = -1;
+  float bestDistance = maxDistance;
+
+  for (int i = 0; i < LaserHarpAudioProcessor::numStrings; ++i)
+  {
+    const auto t = static_cast<float>(i) / static_cast<float>(LaserHarpAudioProcessor::numStrings - 1);
+    const auto stringX = static_cast<float>(playArea.getX()) + t * static_cast<float>(playArea.getWidth());
+    const auto distance = std::abs(static_cast<float>(position.x) - stringX);
+    if (distance < bestDistance)
+    {
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
+}
+
+void LaserHarpAudioProcessorEditor::updateMouseHold(const juce::MouseEvent& event)
+{
+  if (!leftDown)
+    return;
+
+  rightMod = event.mods.isRightButtonDown();
+  std::fill(held.begin(), held.end(), false);
+
+  const auto stringIndex = findNearestString(event.getPosition());
+  if (stringIndex >= 0)
+    held[static_cast<size_t>(stringIndex)] = true;
+
+  refreshGates();
+}
+
+void LaserHarpAudioProcessorEditor::releaseMouseHold()
+{
+  leftDown = false;
+  rightMod = false;
+  std::fill(held.begin(), held.end(), false);
+  refreshGates();
 }
 
 void LaserHarpAudioProcessorEditor::refreshGates()
@@ -134,33 +173,49 @@ void LaserHarpAudioProcessorEditor::resized()
 
 void LaserHarpAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
 {
-  if (event.mods.isLeftButtonDown())
+  if (event.mods.isLeftButtonDown() && playArea.contains(event.getPosition()))
   {
     leftDown = true;
-    rightMod = event.mods.isRightButtonDown();
-    const auto stringIndex = findNearestString(event.getPosition());
-    if (stringIndex >= 0) held[static_cast<size_t>(stringIndex)] = true;
+    updateMouseHold(event);
+    return;
   }
-  refreshGates();
+
+  if (leftDown && event.mods.isRightButtonDown())
+    updateMouseHold(event);
 }
 
 void LaserHarpAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
 {
-  if (leftDown)
+  if (!leftDown)
+    return;
+
+  if (!event.mods.isLeftButtonDown())
   {
-    rightMod = event.mods.isRightButtonDown();
-    std::fill(held.begin(), held.end(), false);
-    const auto stringIndex = findNearestString(event.getPosition());
-    if (stringIndex >= 0) held[static_cast<size_t>(stringIndex)] = true;
-    refreshGates();
+    releaseMouseHold();
+    return;
   }
+
+  updateMouseHold(event);
+}
+
+void LaserHarpAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
+{
+  if (leftDown && !event.mods.isLeftButtonDown())
+    releaseMouseHold();
+}
+
+void LaserHarpAudioProcessorEditor::mouseExit(const juce::MouseEvent&)
+{
+  releaseMouseHold();
 }
 
 void LaserHarpAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
 {
-  if (event.mods.isLeftButtonDown()) return;
-  leftDown = false;
-  rightMod = false;
-  std::fill(held.begin(), held.end(), false);
-  refreshGates();
+  if (!event.mods.isLeftButtonDown())
+  {
+    releaseMouseHold();
+    return;
+  }
+
+  updateMouseHold(event);
 }
